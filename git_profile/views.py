@@ -43,7 +43,8 @@ def searchview(request):
         form = SearchForm(request.POST)
 
         if form.is_valid():
-            form.save(commit=True)
+            form.save(commit=False)
+            form.save()
             return index(request)
         else:
             print('Form is invalid!')
