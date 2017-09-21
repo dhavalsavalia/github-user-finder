@@ -1,38 +1,48 @@
+from __future__ import absolute_import
 from django.shortcuts import render, redirect
+from django.views.generic import ListView
 import requests
 from git_profile.forms import SearchForm
-from git_profile.models import Search
+from git_profile import models
 
 
-def index(request):
-    global url
+class IndexListView(ListView):
 
-    GITHUB_USER = 'dhavalsavalia' # Please enter Username here, while search function is not working
+    model = models.Search
+    template_name = 'index.html'
 
-    user_profile = requests.get('https://api.github.com/users/{0}'.format(str(GITHUB_USER)))
-    user_repos = requests.get('https://api.github.com/users/{0}/repos'.format(str(GITHUB_USER)))
-    repo_detail_resp = requests.get('https://api.github.com/users/{0}/repos'.format(str(GITHUB_USER)))
+    def get_context_data(self, **kwargs):
 
-    content = dict()
+        global url, github_user
 
-    content['user'] = user_profile.json()
-    content['repos'] = user_repos.json()
+        # search_fun = IndexListView()
+        github_user_query = models.Search.objects.all().last()
+        github_user = github_user_query.search_query
 
-    content['repo_detail_resp'] = repo_detail_resp.json()
-    for key_list in content['repos']:
-        url = "https://api.github.com/repos/{0}/{1}".format(str(GITHUB_USER), key_list['name'])
+        user_profile = requests.get('https://api.github.com/users/{0}'.format(str(github_user)))
+        user_repos = requests.get('https://api.github.com/users/{0}/repos'.format(str(github_user)))
+        repo_detail_resp = requests.get('https://api.github.com/users/{0}/repos'.format(str(github_user)))
 
-    repo = requests.get(url)
+        context = dict()
 
-    content['repo'] = repo.json()
+        context['user'] = user_profile.json()
+        context['repos'] = user_repos.json()
 
-    langs = requests.get(content['repo']['languages_url']).json()
-    content['languages'] = langs
-    issues = requests.get(content['repo']['url'] + '/issues')
-    if issues.json():
-        content['issues'] = issues.json()
+        context['repo_detail_resp'] = repo_detail_resp.json()
+        for key_list in context['repos']:
+            url = "https://api.github.com/repos/{0}/{1}".format(str(github_user), key_list['name'])
 
-    return render(request, 'index.html', content)
+        repo = requests.get(url)
+
+        context['repo'] = repo.json()
+
+        langs = requests.get(context['repo']['languages_url']).json()
+        context['languages'] = langs
+        issues = requests.get(context['repo']['url'] + '/issues')
+        if issues.json():
+            context['issues'] = issues.json()
+
+        return context
 
 
 def searchview(request):
