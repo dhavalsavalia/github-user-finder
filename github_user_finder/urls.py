@@ -19,7 +19,7 @@ from git_profile import views
 from django.contrib import admin
 
 urlpatterns = [
-    url(r'^$', views.index, name='index'),
+    url(r'^$', views.IndexListView.as_view()),
     url(r'^search/', views.searchview, name='searchview'),
     url(r'^admin/', admin.site.urls),
 ]
